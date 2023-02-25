@@ -10,6 +10,7 @@ const dbConnect = require("./db/dbConnect");
 // execute database connection 
 dbConnect();
 const User = require("./db/userModel");
+const Liked = require("./db/userLiked")
 
 // Curb Cores Error by adding a header here
 app.use((req, res, next) => {
@@ -45,6 +46,7 @@ app.post("/register", (request, response) => {
         password: hashedPassword,
         name: request.body.name,
         canAddFavorite: true,
+        likedArticles: request.body.likedArticles,
       });
 
       // save the new user

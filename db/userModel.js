@@ -24,6 +24,11 @@ const UserSchema = new mongoose.Schema({
         required: [true, "Please provide a password!"],
         unique: false,
       },
+
+      likedArticles: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Article'
+      }],
   })
   
   module.exports = mongoose.model.Users || mongoose.model("Users", UserSchema);
