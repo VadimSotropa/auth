@@ -43,6 +43,7 @@ app.post("/register", (request, response) => {
       const user = new User({
         email: request.body.email,
         password: hashedPassword,
+        name: request.body.name,
       });
 
       // save the new user
