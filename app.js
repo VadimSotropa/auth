@@ -45,7 +45,6 @@ app.post("/register", (request, response) => {
         password: hashedPassword,
         name: request.body.name,
         canAddFavorite: true,
-        savs: [{}],
       });
 
       // save the new user
