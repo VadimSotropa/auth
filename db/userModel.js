@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,
-        required: [true, "Please provide an Email!"],
+        required: [true, "Please provide an Name!"],
         unique: [false],
       },
 
@@ -18,7 +18,16 @@ const UserSchema = new mongoose.Schema({
         required: [true, "Please provide a password!"],
         unique: false,
       },
-    
+
+      canAddFavorite: {
+        type: Boolean,
+        required: [true, "Please provide a password!"],
+        unique: false,
+      },
+
+      savs: [{
+        type: String
+    }]
   })
   
   module.exports = mongoose.model.Users || mongoose.model("Users", UserSchema);
