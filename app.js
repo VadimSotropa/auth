@@ -1,6 +1,14 @@
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
+// Google Auth
+const { OAuth2Client } = require('google-auth-library');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const Login = require('./models/loginModel');
+const { authenticateUser } = require('./controller/auth');
+
+// end of google
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const auth = require("./auth");
@@ -11,6 +19,10 @@ const dbConnect = require("./db/dbConnect");
 dbConnect();
 const User = require("./db/userModel");
 const Liked = require("./db/userLiked")
+
+// Google cod part
+
+
 
 // Curb Cores Error by adding a header here
 app.use((req, res, next) => {
