@@ -1,15 +1,8 @@
 const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
-// Google Auth
-const { OAuth2Client } = require('google-auth-library');
-const cookieParser = require('cookie-parser');
-const path = require('path');
-const Login = require('./models/loginModel');
-const { authenticateUser } = require('./controller/auth');
-
-// end of google
 const bcrypt = require("bcrypt");
+const uid2 = require('uid2');
 const jwt = require("jsonwebtoken");
 const auth = require("./auth");
 // require database connection 
@@ -57,7 +50,9 @@ app.post("/register", (request, response) => {
         email: request.body.email,
         password: hashedPassword,
         name: request.body.name,
+        token: uid2(32),
         canAddFavorite: true,
+       
       });
 
       // save the new user
@@ -108,22 +103,9 @@ app.post("/login", (request, response) => {
               error,
             });
           }
-
-          //   create JWT token
-          const token = jwt.sign(
-            {
-              userId: user._id,
-              userEmail: user.email,
-            },
-            "RANDOM-TOKEN",
-            { expiresIn: "24h" }
-          );
-
-          //   return success response
           response.status(200).send({
             message: "Login Successful",
             email: user.email,
-            token,
           });
         })
         // catch error if password does not match
