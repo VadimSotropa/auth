@@ -11,8 +11,7 @@ const dbConnect = require("./db/dbConnect");
 // execute database connection 
 dbConnect();
 const User = require("./db/userModel");
-const Liked = require("./db/userLiked")
-
+const ArticleSchema = require('./db/userLiked');
 // Google cod part
 
 
@@ -126,6 +125,24 @@ app.post("/login", (request, response) => {
       });
     });
 });
+
+app.post('/articles', (req, res) => {
+  // Create a new Article object with the title set to the cryptoId in the request body
+  const newArticle = new Article({
+    title: req.body.cryptoId,
+  });
+
+  // Save the new article to the database
+  newArticle.save((err) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error saving article to database');
+    } else {
+      res.status(200).send('Article saved to database');
+    }
+  });
+});
+
 
 // free endpoint
 app.get("/free-endpoint", (request, response) => {
