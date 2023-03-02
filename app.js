@@ -89,12 +89,6 @@ app.post("/login", (request, response) => {
 
     // if email exists
     .then((user) => {
-      if (!user) {
-        return response.status(404).send({
-          message: "Email not found",
-        });
-      }
-
       // compare the password entered and the hashed password found
       bcrypt
         .compare(request.body.password, user.password)
@@ -106,12 +100,14 @@ app.post("/login", (request, response) => {
           if(!passwordCheck) {
             return response.status(400).send({
               message: "Passwords does not match",
+              error,
             });
           }
+
           response.status(200).send({
             message: "Login Successful",
             email: user.email,
-            token,
+            token: user.token,
           });
         })
         // catch error if password does not match
