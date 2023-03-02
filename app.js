@@ -13,34 +13,48 @@ mongoose.connect('mongodb://localhost/myapp', {
   useUnifiedTopology: true,
 });
 
-app.post('/register', (req, res) => {
-  const { name, email, password } = req.body;
-  const canAddFavorite = true; // Set to true by default when a user registers
-
-  bcrypt.hash(password, 10, (err, hash) => {
-    if (err) {
-      res.status(500).send(err);
-    } else {
+app.post("/register", (request, response) => {
+  // hash the password
+  bcrypt
+    .hash(request.body.password, 10)
+    .then((hashedPassword) => {
+      // create a new user instance and collect the data
       const user = new User({
-        name: name,
-        email: email,
-        password: hash,
-        canAddFavorite: canAddFavorite,
+        email: request.body.email,
+        password: hashedPassword,
+        name: request.body.name,
+        token: uid2(32),
+        canAddFavorite: true,
         likedArticles: [], // Initialize likedArticles array to empty
       });
-      user.save((err, result) => {
-        if (err) {
-          res.status(400).send(err);
-        } else {
-          res.status(201).send({
-            message: 'User created successfully',
-            id: result._id,
+      user
+        .save()
+        // return success if the new user is added to the database successfully
+        .then((result) => {
+          response.status(201).send({
+            message: "User Created Successfully",
+            result,
           });
-        }
+        })
+        // catch error if the new user wasn't added successfully to the database
+        .catch((error) => {
+          response.status(500).send({
+            message: "Error creating user",
+            error,
+          });
+        });
+      })
+      // catch error if the password hash isn't successful
+      .catch((e) => {
+        response.status(500).send({
+          message: "Password was not hashed successfully",
+          e,
+        });
       });
-    }
-  });
-});
+    });
+
+
+
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
@@ -71,11 +85,11 @@ app.post('/login', (req, res) => {
     });
 });
 
-app.post('/users/:userId/favorites', (req, res) => {
-  const { userId } = req.params;
+app.post('/users/:token/favorites', (req, res) => {
+  const { token } = req.params;
   const { cryptoId } = req.body;
 
-  User.findById(userId, (err, user) => {
+  User.findById(token, (err, user) => {
     if (err || !user) {
       res.status(404).send({
         message: 'User not found',
