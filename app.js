@@ -135,7 +135,7 @@ app.post('/articles', (req, res) => {
     } else if (!user) {
       res.status(404).send('User not found');
     } else {
-      const newArticle = new Article({
+      const newArticle = new ArticleSchema({
         title: req.body.cryptoId,
       });
       newArticle.save((err, article) => {
