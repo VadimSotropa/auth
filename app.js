@@ -127,18 +127,33 @@ app.post("/login", (request, response) => {
 });
 
 app.post('/articles', (req, res) => {
-  // Create a new Article object with the title set to the cryptoId in the request body
-  const newArticle = new Article({
-    title: req.body.cryptoId,
-  });
-
-  // Save the new article to the database
-  newArticle.save((err) => {
+  const token = req.body.token; // assuming the token is provided in the request body
+  User.findOne({ token }, (err, user) => {
     if (err) {
       console.error(err);
-      res.status(500).send('Error saving article to database');
+      res.status(500).send('Error finding user');
+    } else if (!user) {
+      res.status(404).send('User not found');
     } else {
-      res.status(200).send('Article saved to database');
+      const newArticle = new Article({
+        title: req.body.cryptoId,
+      });
+      newArticle.save((err, article) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error saving article to database');
+        } else {
+          user.likedArticles.push(article._id);
+          user.save((err) => {
+            if (err) {
+              console.error(err);
+              res.status(500).send('Error saving user to database');
+            } else {
+              res.status(200).send('Article saved to database and added to user\'s likedArticles array');
+            }
+          });
+        }
+      });
     }
   });
 });
