@@ -1,130 +1,100 @@
-const express = require("express");
+const express = require('express');
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+const User = require('./models/user');
+const Article = require('./models/article');
+
 const app = express();
-const bodyParser = require('body-parser');
-const bcrypt = require("bcrypt");
-const uid2 = require('uid2');
-const jwt = require("jsonwebtoken");
-const auth = require("./auth");
-// require database connection 
-const dbConnect = require("./db/dbConnect");
 
-// execute database connection 
-dbConnect();
-const User = require("./db/userModel");
-const Liked = require("./db/userLiked")
+app.use(express.json());
 
-// Google cod part
-
-
-
-// Curb Cores Error by adding a header here
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-  );
-  next();
+mongoose.connect('mongodb://localhost/myapp', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
-// body parser configuration
-app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+app.post('/register', (req, res) => {
+  const { name, email, password } = req.body;
+  const canAddFavorite = true; // Set to true by default when a user registers
 
-app.get("/", (request, response, next) => {
-  response.json({ message: "Hey! This is your server response!" });
-  next();
-});
-
-app.post("/register", (request, response) => {
-  // hash the password
-  bcrypt
-    .hash(request.body.password, 10)
-    .then((hashedPassword) => {
-      // create a new user instance and collect the data
+  bcrypt.hash(password, 10, (err, hash) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
       const user = new User({
-        email: request.body.email,
-        password: hashedPassword,
-        name: request.body.name,
-        token: uid2(32),
-        canAddFavorite: true,
-       
+        name: name,
+        email: email,
+        password: hash,
+        canAddFavorite: canAddFavorite,
+        likedArticles: [], // Initialize likedArticles array to empty
       });
-
-      // save the new user
-      user
-        .save()
-        // return success if the new user is added to the database successfully
-        .then((result) => {
-          response.status(201).send({
-            message: "User Created Successfully",
-            result,
+      user.save((err, result) => {
+        if (err) {
+          res.status(400).send(err);
+        } else {
+          res.status(201).send({
+            message: 'User created successfully',
+            id: result._id,
           });
-        })
-        // catch error if the new user wasn't added successfully to the database
-        .catch((error) => {
-          response.status(500).send({
-            message: "Error creating user",
-            error,
-          });
-        });
-    })
-    // catch error if the password hash isn't successful
-    .catch((e) => {
-      response.status(500).send({
-        message: "Password was not hashed successfully",
-        e,
+        }
       });
-    });
+    }
+  });
 });
 
-// login endpoint
-app.post("/login", (request, response) => {
-  // check if email exists
-  User.findOne({ email: request.body.email })
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
 
-    // if email exists
-    .then((user) => {
-      // compare the password entered and the hashed password found
-      bcrypt
-        .compare(request.body.password, user.password)
-
-        // if the passwords match
-        .then((passwordCheck) => {
-
-          // check if password matches
-          if(!passwordCheck) {
-            return response.status(400).send({
-              message: "Passwords does not match",
-              error,
+  User.findOne({ email: email })
+    .then(user => {
+      if (!user) {
+        res.status(401).send({
+          message: 'Authentication failed',
+        });
+      } else {
+        bcrypt.compare(password, user.password, (err, result) => {
+          if (err || !result) {
+            res.status(401).send({
+              message: 'Authentication failed',
+            });
+          } else {
+            res.status(200).send({
+              message: 'Login successful',
+              id: user._id,
             });
           }
-          response.status(200).send({
-            message: "Login Successful",
-            email: user.email,
-          });
-        })
-        // catch error if password does not match
-        .catch((error) => {
-          response.status(400).send({
-            message: "Passwords does not match",
-            error,
-          });
         });
+      }
     })
-    // catch error if email does not exist
-    .catch((e) => {
-      response.status(404).send({
-        message: "Email not found",
-        e,
-      });
+    .catch(err => {
+      res.status(500).send(err);
     });
 });
 
+app.post('/users/:userId/favorites', (req, res) => {
+  const { userId } = req.params;
+  const { cryptoId } = req.body;
+
+  User.findById(userId, (err, user) => {
+    if (err || !user) {
+      res.status(404).send({
+        message: 'User not found',
+      });
+    } else {
+      user.likedArticles.push(cryptoId);
+      user.save((err, result) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          res.status(201).send({
+            message: 'Favorite added successfully',
+            likedArticle: cryptoId,
+          });
+        }
+      });
+    }
+  });
+});
 // free endpoint
 app.get("/free-endpoint", (request, response) => {
   response.json({ message: "You are free to access me anytime" });
