@@ -125,6 +125,26 @@ app.post("/login", (request, response) => {
     });
 });
 
+app.get('/user/:email', async (request, response) => {
+  try {
+    const { email } = request.params;
+
+    // Retrieve the user's information from the database
+    const user = await User.findOne({ email });
+
+    // If user is found, return the name, email, and token properties
+    if (user) {
+      const { name, email, token } = user;
+      response.status(200).send({ name, email, token });
+    } else {
+      response.status(404).send({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    response.status(500).send({ message: 'Server error' });
+  }
+});
+
 app.post('/articles', (req, res) => {
   const token = req.body.token;
   User.findOne({ token }, (err, user) => {
