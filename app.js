@@ -62,6 +62,7 @@ app.post("/register", (request, response) => {
           response.status(201).send({
             message: "User Created Successfully",
             result,
+            token,
           });
         })
         // catch error if the new user wasn't added successfully to the database
@@ -105,7 +106,6 @@ app.post("/login", (request, response) => {
 
           response.status(200).send({
             message: "Login Successful",
-            email: user.email,
             token: user.token,
           });
         })
