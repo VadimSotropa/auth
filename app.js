@@ -145,56 +145,85 @@ app.get('/user/:email', async (request, response) => {
   }
 });
 
-app.post('/articles', (req, res) => {
-  const token = req.body.token;
-  User.findOne({ token }, (err, user) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error finding user');
-    } else if (!user) {
-      res.status(404).send('User not found');
-    } else {
-      const cryptoId = req.body.cryptoId;
-      ArticleSchema.findOne({ title: cryptoId }, (err, article) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error finding article');
-        } else if (article) {
-          // Article already exists in database
-          user.likedArticles.push(article._id);
-          user.save((err) => {
-            if (err) {
-              console.error(err);
-              res.status(500).send('Error saving user to database');
-            } else {
-              res.status(200).send('Article already exists in database, added to user\'s likedArticles array');
-            }
-          });
-        } else {
-          // Article does not exist in database, create a new one
-          const newArticle = new ArticleSchema({
-            title: cryptoId,
-          });
-          newArticle.save((err, savedArticle) => {
-            if (err) {
-              console.error(err);
-              res.status(500).send('Error saving article to database');
-            } else {
-              user.likedArticles.push(savedArticle._id);
-              user.save((err) => {
-                if (err) {
-                  console.error(err);
-                  res.status(500).send('Error saving user to database');
-                } else {
-                  res.status(200).send('Article saved to database and added to user\'s likedArticles array');
-                }
-              });
-            }
-          });
-        }
-      });
+// app.post('/articles', (req, res) => {
+//   const token = req.body.token;
+//   User.findOne({ token }, (err, user) => {
+//     if (err) {
+//       console.error(err);
+//       res.status(500).send('Error finding user');
+//     } else if (!user) {
+//       res.status(404).send('User not found');
+//     } else {
+//       const cryptoId = req.body.cryptoId;
+//       ArticleSchema.findOne({ title: cryptoId }, (err, article) => {
+//         if (err) {
+//           console.error(err);
+//           res.status(500).send('Error finding article');
+//         } else if (article) {
+//           // Article already exists in database
+//           user.likedArticles.push(article._id);
+//           user.save((err) => {
+//             if (err) {
+//               console.error(err);
+//               res.status(500).send('Error saving user to database');
+//             } else {
+//               res.status(200).send('Article already exists in database, added to user\'s likedArticles array');
+//             }
+//           });
+//         } else {
+//           // Article does not exist in database, create a new one
+//           const newArticle = new ArticleSchema({
+//             title: cryptoId,
+//           });
+//           newArticle.save((err, savedArticle) => {
+//             if (err) {
+//               console.error(err);
+//               res.status(500).send('Error saving article to database');
+//             } else {
+//               user.likedArticles.push(savedArticle._id);
+//               user.save((err) => {
+//                 if (err) {
+//                   console.error(err);
+//                   res.status(500).send('Error saving user to database');
+//                 } else {
+//                   res.status(200).send('Article saved to database and added to user\'s likedArticles array');
+//                 }
+//               });
+//             }
+//           });
+//         }
+//       });
+//     }
+//   });
+// });
+
+app.post('/articles', async (req, res) => {
+  try {
+    const { token, cryptoId } = req.body;
+    const user = await User.findOne({ token });
+    if (!user) {
+      return res.status(404).send('User not found');
     }
-  });
+
+    const article = await ArticleSchema.findOne({ title: cryptoId });
+    if (article) {
+      // Article already exists in database
+      user.likedArticles.push(article._id);
+    } else {
+      // Article does not exist in database, create a new one
+      const newArticle = new ArticleSchema({
+        title: cryptoId,
+      });
+      await newArticle.save();
+      user.likedArticles.push(newArticle._id);
+    }
+
+    await user.save();
+    res.status(200).send('Article saved to database and added to user\'s likedArticles array');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error saving article or user to database');
+  }
 });
 
 app.delete('/articles/:title', (req, res) => {
