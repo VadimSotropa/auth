@@ -145,8 +145,8 @@ app.get('/user/:email', async (request, response) => {
   }
 });
 
-app.post('/articles/:symbol', (req, res) => {
-  const token = req.headers.authorization.split(' ')[1]; // Extract token from headers
+app.post('/articles', (req, res) => {
+  const token = req.body.token;
   User.findOne({ token }, (err, user) => {
     if (err) {
       console.error(err);
@@ -154,8 +154,8 @@ app.post('/articles/:symbol', (req, res) => {
     } else if (!user) {
       res.status(404).send('User not found');
     } else {
-      const symbol = req.params.symbol;
-      ArticleSchema.findOne({ title: symbol }, (err, article) => {
+      const cryptoId = req.body.cryptoId;
+      ArticleSchema.findOne({ title: cryptoId }, (err, article) => {
         if (err) {
           console.error(err);
           res.status(500).send('Error finding article');
@@ -173,7 +173,7 @@ app.post('/articles/:symbol', (req, res) => {
         } else {
           // Article does not exist in database, create a new one
           const newArticle = new ArticleSchema({
-            title: symbol,
+            title: cryptoId,
           });
           newArticle.save((err, savedArticle) => {
             if (err) {
