@@ -184,7 +184,11 @@ app.delete('/Like', async (req, res) => {
       return res.status(401).json({ msg: 'Unauthorized' });
     }
 
-    user.likedArticles = user.likedArticles.filter(liked => liked !== article);
+    if (!user.likedArticles.includes(article)) {
+      return res.status(404).json({ msg: 'Article not found' });
+    }
+
+    user.likedArticles = user.likedArticles.filter((liked) => liked !== article);
     await user.save();
 
     res.json(user);
@@ -193,7 +197,6 @@ app.delete('/Like', async (req, res) => {
     res.status(500).json({ msg: 'Server error', err: err.message });
   }
 });
-
 
 
 
