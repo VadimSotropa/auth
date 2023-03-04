@@ -33,8 +33,7 @@ const UserSchema = new mongoose.Schema({
       },
 
       likedArticles: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Article'
+        type: String,
       }],
   })
   

@@ -148,41 +148,49 @@ app.get('/user/:email', async (request, response) => {
 
 
 
-
-
-
-router.post('/articles', async (req, res) => {
+app.post('/Like', async (req, res) => {
   try {
-    // Get the user's token from the request body
     const token = req.body.token;
+    const article = req.body.article;
 
-    // Find the user associated with the token
     const user = await User.findOne({ token });
 
     if (!user) {
       return res.status(401).json({ msg: 'Unauthorized' });
     }
 
-    // Create a new article with the request body
-    const article = new Article({ title: req.body.title });
-
-    // Save the article to the database
-    await article.save();
-
-    // Add the article to the user's likedArticles array
-    user.likedArticles.push(article._id);
-
-    // Add the article title to the user's titles array
-    user.titles.push(req.body.title);
-
+    user.likedArticles.push(article);
     await user.save();
 
-    res.json(article);
+    res.json(user);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ msg: 'Server error', err: err.message });
   }
 });
+
+app.delete('/Like', async (req, res) => {
+  try {
+    const token = req.body.token;
+    const article = req.body.article;
+
+    const user = await User.findOne({ token });
+
+    if (!user) {
+      return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+    user.likedArticles = user.likedArticles.filter(liked => liked !== article);
+    await user.save();
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server error', err: err.message });
+  }
+});
+
+
 
 
 app.put('/articles/:title', (req, res) => {
