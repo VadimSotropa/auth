@@ -1,48 +1,40 @@
 const mongoose = require("mongoose");
-
+const Liked = require("./userLiked")
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, "Please provide a name!"],
-    unique: [false],
-  },
+    name: {
+        type: String,
+        required: [true, "Please provide an Name!"],
+        unique: [false],
+      },
 
-  token: {
-    type: String,
-    required: [true, "Please provide a token!"],
-    unique: [false],
-  },
+      token: {
+        type: String,
+        required: [true, "Please provide an Name!"],
+        unique: [false],
+      },
+      
+      email: {
+        type: String,
+        required: [true, "Please provide an Name!"],
+        unique: [false, "Email Exist"],
+      },
+    
+      password: {
+        type: String,
+        required: [true, "Please provide a password!"],
+        unique: false,
+      },
 
-  email: {
-    type: String,
-    required: [true, "Please provide an email!"],
-    unique: [false, "Email exists"],
-  },
+      canAddFavorite: {
+        type: Boolean,
+        required: [true, "Please provide a password!"],
+        unique: false,
+      },
 
-  password: {
-    type: String,
-    required: [true, "Please provide a password!"],
-    unique: false,
-  },
-
-  canAddFavorite: {
-    type: Boolean,
-    required: [true, "Please provide a password!"],
-    unique: false,
-  },
-
-  likedArticles: [
-    {
-      article: {
+      likedArticles: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Article'
-      },
-      title: {
-        type: String,
-        required: true,
-      },
-    },
-  ],
-});
-
-module.exports = mongoose.model("User", UserSchema);
+      }],
+  })
+  
+  module.exports = mongoose.model.Users || mongoose.model("Users", UserSchema);
