@@ -150,50 +150,35 @@ app.get('/user/:email', async (request, response) => {
 
 
 
-
-app.post('/articles', (req, res) => {
+app.post('/articles', async (req, res) => {
   const token = req.body.token;
-  User.findOne({ token }, (err, user) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error finding user');
-    } else if (!user) {
-      res.status(404).send('User not found');
-    } else {
-      const cryptoId = req.body.cryptoId;
-      Article.findOne({ title: cryptoId }, (err, article) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error finding article');
-        } else if (article) {
-          // Article already exists in database
-          article.User.push(user._id);
-          article.save((err) => {
-            if (err) {
-              console.error(err);
-              res.status(500).send('Error saving article to database');
-            } else {
-              res.status(200).send('Article already exists in database, added to user\'s likedArticles array');
-            }
-          });
-        } else {
-          // Article does not exist in database, create a new one
-          const newArticle = new Article({
-            title: cryptoId,
-            User: [user._id]
-          });
-          newArticle.save((err, savedArticle) => {
-            if (err) {
-              console.error(err);
-              res.status(500).send('Error saving article to database');
-            } else {
-              res.status(200).send('Article saved to database and added to user\'s likedArticles array');
-            }
-          });
-        }
-      });
+
+  try {
+    const user = await UserSchema.findOne({ token });
+    if (!user) {
+      return res.status(404).send('User not found');
     }
-  });
+
+    const cryptoId = req.body.cryptoId;
+    const article = await ArticleSchema.findOne({ title: cryptoId });
+    if (!article) {
+      // Article does not exist in database, create a new one
+      const newArticle = new ArticleSchema({
+        title: cryptoId,
+      });
+      await newArticle.save();
+      article = newArticle;
+    }
+
+    // Add the article to the user's list of liked articles
+    user.likedArticles.push({ article });
+    await user.save();
+
+    res.status(200).send('Article saved to database and added to user\'s likedArticles array');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error saving article to database');
+  }
 });
 
 
