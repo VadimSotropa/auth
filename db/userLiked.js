@@ -6,6 +6,8 @@ const ArticleSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+
+  likes: [{type: mongoose.Schema.Types.ObjectId, ref : 'users'}],
 });
 
 module.exports = mongoose.model('Article', ArticleSchema);
