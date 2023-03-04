@@ -160,7 +160,7 @@ app.post('/Like', async (req, res) => {
     }
 
     if (user.likedArticles.includes(article)) {
-      return res.status(400).json({ msg: 'Article already liked' });
+      return res.json({ msg: 'Article already liked' });
     }
 
     user.likedArticles.push(article);
