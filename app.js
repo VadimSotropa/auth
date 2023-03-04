@@ -204,7 +204,7 @@ app.post('/articles', (req, res) => {
 });
 
 
-app.delete('/articles/:title', (req, res) => {
+app.put('/articles/:title', (req, res) => {
   const token = req.body.token;
   User.findOne({ token }, (err, user) => {
     if (err) {
@@ -214,16 +214,24 @@ app.delete('/articles/:title', (req, res) => {
       res.status(404).send('User not found');
     } else {
       const articleTitle = req.params.title;
-      ArticleSchema.findOneAndDelete({ title: articleTitle }, (err, article) => {
+      ArticleSchema.findOne({ title: articleTitle }, (err, article) => {
         if (err) {
           console.error(err);
-          res.status(500).send('Error deleting article from database');
+          res.status(500).send('Error finding article');
         } else if (!article) {
           res.status(404).send('Article not found');
         } else {
           const index = user.likedArticles.indexOf(article._id);
           if (index === -1) {
-            res.status(404).send('Article not found in user\'s likedArticles array');
+            user.likedArticles.push(article._id);
+            user.save((err) => {
+              if (err) {
+                console.error(err);
+                res.status(500).send('Error saving user to database');
+              } else {
+                res.status(200).send('Article added to user\'s likedArticles array');
+              }
+            });
           } else {
             user.likedArticles.splice(index, 1);
             user.save((err) => {
@@ -231,7 +239,7 @@ app.delete('/articles/:title', (req, res) => {
                 console.error(err);
                 res.status(500).send('Error saving user to database');
               } else {
-                res.status(200).send('Article deleted from database and removed from user\'s likedArticles array');
+                res.status(200).send('Article removed from user\'s likedArticles array');
               }
             });
           }
@@ -240,7 +248,6 @@ app.delete('/articles/:title', (req, res) => {
     }
   });
 });
-
 
 // free endpoint
 app.get("/free-endpoint", (request, response) => {
