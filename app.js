@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const auth = require("./auth");
 // require database connection 
 const dbConnect = require("./db/dbConnect");
+const router = express.Router();
 
 // execute database connection 
 dbConnect();
