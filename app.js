@@ -10,8 +10,8 @@ const dbConnect = require("./db/dbConnect");
 
 // execute database connection 
 dbConnect();
-const User = require("./db/userModel");
-const ArticleSchema = require('./db/userLiked');
+const User = require("./db/User");
+const ArticleSchema = require('./db/Article');
 // Google cod part
 
 
@@ -150,34 +150,36 @@ app.get('/user/:email', async (request, response) => {
 
 
 
-app.post('/articles', async (req, res) => {
-  const token = req.body.token;
-
+router.put('/articles', async (req, res) => {
   try {
-    const user = await UserSchema.findOne({ token });
+    // Get the user's token from the request body
+    const token = req.body.token;
+
+    // Find the user associated with the token
+    const user = await User.findOne({ token });
+
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(401).json({ msg: 'Unauthorized' });
     }
 
-    const cryptoId = req.body.cryptoId;
-    const article = await ArticleSchema.findOne({ title: cryptoId });
-    if (!article) {
-      // Article does not exist in database, create a new one
-      const newArticle = new ArticleSchema({
-        title: cryptoId,
-      });
-      await newArticle.save();
-      article = newArticle;
-    }
+    // Create a new article with the request body
+    const article = new Article({ title: req.body.title });
 
-    // Add the article to the user's list of liked articles
-    user.likedArticles.push({ article });
+    // Save the article to the database
+    await article.save();
+
+    // Add the article to the user's likedArticles array
+    user.likedArticles.push(article._id);
+
+    // Add the article title to the user's titles array
+    user.titles.push(req.body.title);
+
     await user.save();
 
-    res.status(200).send('Article saved to database and added to user\'s likedArticles array');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error saving article to database');
+    res.json(article);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Server error' });
   }
 });
 
