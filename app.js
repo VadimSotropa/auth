@@ -147,160 +147,99 @@ app.get('/user/:email', async (request, response) => {
 
 
 
-// Test code
-router.post('/articles', async (req, res) => {
-  try {
-    const { token, cryptoId } = req.body;
-    const user = await User.findOne({ token });
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
 
-    const article = await ArticleSchema.findOne({ title: cryptoId });
-    if (article) {
-      // Article already exists in database
-      user.likedArticles.push(article._id);
-      await user.save();
-      res.status(200).send('Article already exists in database and added to user\'s likedArticles array');
+
+
+
+app.post('/articles', (req, res) => {
+  const token = req.body.token;
+  User.findOne({ token }, (err, user) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error finding user');
+    } else if (!user) {
+      res.status(404).send('User not found');
     } else {
-      // Article does not exist in database, create a new one
-      const newArticle = new ArticleSchema({
-        title: cryptoId,
+      const cryptoId = req.body.cryptoId;
+      ArticleSchema.findOne({ title: cryptoId }, (err, article) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error finding article');
+        } else if (article) {
+          // Article already exists in database
+          user.likedArticles.push(article._id);
+          user.save((err) => {
+            if (err) {
+              console.error(err);
+              res.status(500).send('Error saving user to database');
+            } else {
+              res.status(200).send('Article already exists in database, added to user\'s likedArticles array');
+            }
+          });
+        } else {
+          // Article does not exist in database, create a new one
+          const newArticle = new ArticleSchema({
+            title: cryptoId,
+          });
+          newArticle.save((err, savedArticle) => {
+            if (err) {
+              console.error(err);
+              res.status(500).send('Error saving article to database');
+            } else {
+              user.likedArticles.push(savedArticle._id);
+              user.save((err) => {
+                if (err) {
+                  console.error(err);
+                  res.status(500).send('Error saving user to database');
+                } else {
+                  res.status(200).send('Article saved to database and added to user\'s likedArticles array');
+                }
+              });
+            }
+          });
+        }
       });
-      await newArticle.save();
-      user.likedArticles.push(newArticle._id);
-      await user.save();
-      res.status(200).send('Article saved to database and added to user\'s likedArticles array');
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error saving article or user to database');
-  }
+  });
 });
 
-router.put('/articles/:title/like', async (req, res) => {
-  try {
-    const token = req.body.token;
-    const user = await User.findOne({ token });
-    if (!user) {
-      return res.status(404).send('User not found');
-    }
 
-    const articleTitle = req.params.title;
-    const article = await ArticleSchema.findOne({ title: articleTitle });
-    if (!article) {
-      return res.status(404).send('Article not found');
-    }
-
-    if (user.likedArticles.includes(article._id)) {
-      // Article already liked, so remove it
-      user.likedArticles = user.likedArticles.filter((likedArticle) => likedArticle.toString() !== article._id.toString());
-      await user.save();
-      res.status(200).send('Article removed from user\'s likedArticles array');
+app.delete('/articles/:title', (req, res) => {
+  const token = req.body.token;
+  User.findOne({ token }, (err, user) => {
+    if (err) {
+      console.error(err);
+      res.status(500).send('Error finding user');
+    } else if (!user) {
+      res.status(404).send('User not found');
     } else {
-      // Article not yet liked, so add it
-      user.likedArticles.push(article._id);
-      await user.save();
-      res.status(200).send('Article added to user\'s likedArticles array');
+      const articleTitle = req.params.title;
+      ArticleSchema.findOneAndDelete({ title: articleTitle }, (err, article) => {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Error deleting article from database');
+        } else if (!article) {
+          res.status(404).send('Article not found');
+        } else {
+          const index = user.likedArticles.indexOf(article._id);
+          if (index === -1) {
+            res.status(404).send('Article not found in user\'s likedArticles array');
+          } else {
+            user.likedArticles.splice(index, 1);
+            user.save((err) => {
+              if (err) {
+                console.error(err);
+                res.status(500).send('Error saving user to database');
+              } else {
+                res.status(200).send('Article deleted from database and removed from user\'s likedArticles array');
+              }
+            });
+          }
+        }
+      });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error liking or unliking article');
-  }
+  });
 });
-// End of test code
-
-
-
-// app.post('/articles', (req, res) => {
-//   const token = req.body.token;
-//   User.findOne({ token }, (err, user) => {
-//     if (err) {
-//       console.error(err);
-//       res.status(500).send('Error finding user');
-//     } else if (!user) {
-//       res.status(404).send('User not found');
-//     } else {
-//       const cryptoId = req.body.cryptoId;
-//       ArticleSchema.findOne({ title: cryptoId }, (err, article) => {
-//         if (err) {
-//           console.error(err);
-//           res.status(500).send('Error finding article');
-//         } else if (article) {
-//           // Article already exists in database
-//           user.likedArticles.push(article._id);
-//           user.save((err) => {
-//             if (err) {
-//               console.error(err);
-//               res.status(500).send('Error saving user to database');
-//             } else {
-//               res.status(200).send('Article already exists in database, added to user\'s likedArticles array');
-//             }
-//           });
-//         } else {
-//           // Article does not exist in database, create a new one
-//           const newArticle = new ArticleSchema({
-//             title: cryptoId,
-//           });
-//           newArticle.save((err, savedArticle) => {
-//             if (err) {
-//               console.error(err);
-//               res.status(500).send('Error saving article to database');
-//             } else {
-//               user.likedArticles.push(savedArticle._id);
-//               user.save((err) => {
-//                 if (err) {
-//                   console.error(err);
-//                   res.status(500).send('Error saving user to database');
-//                 } else {
-//                   res.status(200).send('Article saved to database and added to user\'s likedArticles array');
-//                 }
-//               });
-//             }
-//           });
-//         }
-//       });
-//     }
-//   });
-// });
-
-
-// app.delete('/articles/:title', (req, res) => {
-//   const token = req.body.token;
-//   User.findOne({ token }, (err, user) => {
-//     if (err) {
-//       console.error(err);
-//       res.status(500).send('Error finding user');
-//     } else if (!user) {
-//       res.status(404).send('User not found');
-//     } else {
-//       const articleTitle = req.params.title;
-//       ArticleSchema.findOneAndDelete({ title: articleTitle }, (err, article) => {
-//         if (err) {
-//           console.error(err);
-//           res.status(500).send('Error deleting article from database');
-//         } else if (!article) {
-//           res.status(404).send('Article not found');
-//         } else {
-//           const index = user.likedArticles.indexOf(article._id);
-//           if (index === -1) {
-//             res.status(404).send('Article not found in user\'s likedArticles array');
-//           } else {
-//             user.likedArticles.splice(index, 1);
-//             user.save((err) => {
-//               if (err) {
-//                 console.error(err);
-//                 res.status(500).send('Error saving user to database');
-//               } else {
-//                 res.status(200).send('Article deleted from database and removed from user\'s likedArticles array');
-//               }
-//             });
-//           }
-//         }
-//       });
-//     }
-//   });
-// });
 
 
 // free endpoint
