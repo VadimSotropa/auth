@@ -226,6 +226,44 @@ app.post('/articles', async (req, res) => {
   }
 });
 
+// app.delete('/articles/:title', (req, res) => {
+//   const token = req.body.token;
+//   User.findOne({ token }, (err, user) => {
+//     if (err) {
+//       console.error(err);
+//       res.status(500).send('Error finding user');
+//     } else if (!user) {
+//       res.status(404).send('User not found');
+//     } else {
+//       const articleTitle = req.params.title;
+//       ArticleSchema.findOneAndDelete({ title: articleTitle }, (err, article) => {
+//         if (err) {
+//           console.error(err);
+//           res.status(500).send('Error deleting article from database');
+//         } else if (!article) {
+//           res.status(404).send('Article not found');
+//         } else {
+//           const index = user.likedArticles.indexOf(article._id);
+//           if (index === -1) {
+//             res.status(404).send('Article not found in user\'s likedArticles array');
+//           } else {
+//             user.likedArticles.splice(index, 1);
+//             user.save((err) => {
+//               if (err) {
+//                 console.error(err);
+//                 res.status(500).send('Error saving user to database');
+//               } else {
+//                 res.status(200).send('Article deleted from database and removed from user\'s likedArticles array');
+//               }
+//             });
+//           }
+//         }
+//       });
+//     }
+//   });
+// });
+
+
 app.delete('/articles/:title', (req, res) => {
   const token = req.body.token;
   User.findOne({ token }, (err, user) => {
@@ -243,7 +281,9 @@ app.delete('/articles/:title', (req, res) => {
         } else if (!article) {
           res.status(404).send('Article not found');
         } else {
-          const index = user.likedArticles.indexOf(article._id);
+          const index = user.likedArticles.findIndex(
+            (articleId) => articleId.toString() === article._id.toString()
+          );
           if (index === -1) {
             res.status(404).send('Article not found in user\'s likedArticles array');
           } else {
@@ -262,6 +302,7 @@ app.delete('/articles/:title', (req, res) => {
     }
   });
 });
+
 
 // free endpoint
 app.get("/free-endpoint", (request, response) => {
