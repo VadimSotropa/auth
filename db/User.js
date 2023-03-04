@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const Liked = require("./userLiked")
+const articleSchema = require("./Article")
+
 const UserSchema = new mongoose.Schema({
     name: {
         type: String,

@@ -151,7 +151,7 @@ app.get('/user/:email', async (request, response) => {
 
 
 
-router.put('/articles', async (req, res) => {
+router.post('/articles', async (req, res) => {
   try {
     // Get the user's token from the request body
     const token = req.body.token;
