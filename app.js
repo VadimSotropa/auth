@@ -11,7 +11,7 @@ const dbConnect = require("./db/dbConnect");
 // execute database connection 
 dbConnect();
 const User = require("./db/User");
-const ArticleSchema = require('./db/Article');
+const Article = require('./db/Article');
 // Google cod part
 
 
