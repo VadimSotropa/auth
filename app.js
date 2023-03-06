@@ -199,52 +199,6 @@ app.delete('/Like', async (req, res) => {
 });
 
 
-
-app.put('/articles/:title', (req, res) => {
-  const token = req.body.token;
-  User.findOne({ token }, (err, user) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Error finding user');
-    } else if (!user) {
-      res.status(404).send('User not found');
-    } else {
-      const articleTitle = req.params.title;
-      ArticleSchema.findOne({ title: articleTitle }, (err, article) => {
-        if (err) {
-          console.error(err);
-          res.status(500).send('Error finding article');
-        } else if (!article) {
-          res.status(404).send('Article not found');
-        } else {
-          const index = user.likedArticles.indexOf(article._id);
-          if (index === -1) {
-            user.likedArticles.push(article._id);
-            user.save((err) => {
-              if (err) {
-                console.error(err);
-                res.status(500).send('Error saving user to database');
-              } else {
-                res.status(200).send('Article added to user\'s likedArticles array');
-              }
-            });
-          } else {
-            user.likedArticles.splice(index, 1);
-            user.save((err) => {
-              if (err) {
-                console.error(err);
-                res.status(500).send('Error saving user to database');
-              } else {
-                res.status(200).send('Article removed from user\'s likedArticles array');
-              }
-            });
-          }
-        }
-      });
-    }
-  });
-});
-
 // free endpoint
 app.get("/free-endpoint", (request, response) => {
   response.json({ message: "You are free to access me anytime" });
