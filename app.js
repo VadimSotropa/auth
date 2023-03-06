@@ -135,8 +135,8 @@ app.get('/user/:email', async (request, response) => {
 
     // If user is found, return the name, email, and token properties
     if (user) {
-      const { name, email, token } = user;
-      response.status(200).send({ name, email, token });
+      const { name, email, token, likedArticles} = user;
+      response.status(200).send({ name, email, token, likedArticles });
     } else {
       response.status(404).send({ message: 'User not found' });
     }
