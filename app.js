@@ -41,45 +41,60 @@ app.get("/", (request, response, next) => {
 });
 
 app.post("/register", (request, response) => {
-  // hash the password
-  bcrypt
-    .hash(request.body.password, 10)
-    .then((hashedPassword) => {
-      // create a new user instance and collect the data
-      const user = new User({
-        email: request.body.email,
-        password: hashedPassword,
-        name: request.body.name,
-        token: uid2(32),
-        canAddFavorite: true,
-       
+  // Check if email already exists in database
+  User.findOne({ email: request.body.email }, (error, existingUser) => {
+    if (error) {
+      // return error if there was an issue with the database
+      response.status(500).send({
+        message: "Error creating user",
+        error,
       });
-
-      // save the new user
-      user
-        .save()
-        // return success if the new user is added to the database successfully
-        .then((result) => {
-          response.status(201).send({
-            message: "User Created Successfully",
-            result,
+    } else if (existingUser) {
+      // return error if email already exists in database
+      response.status(400).send({
+        message: "Email already exists",
+      });
+    } else {
+      // hash the password
+      bcrypt
+        .hash(request.body.password, 10)
+        .then((hashedPassword) => {
+          // create a new user instance and collect the data
+          const user = new User({
+            email: request.body.email,
+            password: hashedPassword,
+            name: request.body.name,
+            token: uid2(32),
+            canAddFavorite: true,
           });
+
+          // save the new user
+          user
+            .save()
+            // return success if the new user is added to the database successfully
+            .then((result) => {
+              response.status(201).send({
+                message: "User Created Successfully",
+                result,
+              });
+            })
+            // catch error if the new user wasn't added successfully to the database
+            .catch((error) => {
+              response.status(500).send({
+                message: "Error creating user",
+                error,
+              });
+            });
         })
-        // catch error if the new user wasn't added successfully to the database
-        .catch((error) => {
+        // catch error if the password hash isn't successful
+        .catch((e) => {
           response.status(500).send({
-            message: "Error creating user",
-            error,
+            message: "Password was not hashed successfully",
+            e,
           });
         });
-    })
-    // catch error if the password hash isn't successful
-    .catch((e) => {
-      response.status(500).send({
-        message: "Password was not hashed successfully",
-        e,
-      });
-    });
+    }
+  });
 });
 
 // login endpoint
